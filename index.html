@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="DeutschVoice Agent — Yapay zeka destekli Almanca konuşma asistanı. Almanca pratiği yapın, dilbilgisi ve telaffuz geri bildirimi alın.">
+  <meta name="theme-color" content="#0f1419">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <title>DeutschVoice Agent — Almanca Konuşma Asistanı</title>
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header class="header" id="header">
+      <div class="header-left">
+        <button class="icon-btn" id="btn-history" title="Sohbet Geçmişi" aria-label="Sohbet geçmişini aç">
+          ☰
+        </button>
+        <button class="icon-btn" id="btn-vocabulary" title="Kelime Listesi (Supabase)" aria-label="Kelime listesini aç">
+          📚
+        </button>
+        <div class="header-logo">
+          <img src="/favicon.svg" alt="DeutschVoice" class="header-logo-icon">
+          <div>
+            <div class="header-title">DeutschVoice Agent</div>
+            <div class="header-subtitle">Almanca Konuşma Asistanı</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Live Mode Toggles -->
+        <div class="audio-toggles" id="live-toggles" style="display: flex; gap: 8px; margin-right: 10px;">
+          <!-- User Microphone Mute/Unmute -->
+          <button class="toggle-btn active" id="btn-live-mic" title="Mikrofonu Kapat">
+            <span class="icon">🎙️</span>
+          </button>
+
+          <!-- Global Audio Mute/Unmute -->
+          <button class="toggle-btn active" id="btn-live-audio" title="Sesi Kapat">
+            <span class="icon">🔊</span>
+          </button>
+          
+          <!-- Feedback Enable/Disable -->
+          <button class="toggle-btn active" id="btn-live-feedback" title="Hata Düzeltme & Geri Bildirim (Açık)">
+            <span class="icon">🎓</span>
+          </button>
+
+          <!-- Feedback Language TR/DE -->
+          <button class="toggle-btn active" id="btn-live-feedback-lang" title="Geri Bildirim Dili: Türkçe">
+            <span class="flag">🇹🇷</span>
+          </button>
+          
+          <!-- Mode Toggle (Akıcı vs Bas-Konuş) -->
+          <button class="toggle-btn active" id="btn-interaction-mode" title="Mod: Akıcı Konuşma">
+            <span class="icon" id="mode-icon">🗣️</span>
+          </button>
+          
+          <!-- Speed Control -->
+          <div class="speed-control-widget" title="Konuşma Hızı">
+            <button class="speed-widget-btn" id="btn-speed-down">−</button>
+            <span class="speed-widget-val" id="label-speed-value">1.00x</span>
+            <button class="speed-widget-btn" id="btn-speed-up">+</button>
+          </div>
+        </div>
+        
+        <span class="status-badge status-badge--level" id="badge-level">B1</span>
+        <span class="status-badge status-badge--topic" id="badge-topic">Serbest</span>
+        <button class="icon-btn" id="btn-settings" title="Ayarlar" aria-label="Ayarları aç">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- History Sidebar -->
+    <div class="history-overlay" id="history-overlay"></div>
+    <aside class="history-panel" id="history-panel">
+      <div class="history-panel-header">
+        <h2 class="history-panel-title">Sohbet Geçmişi</h2>
+        <button class="icon-btn" id="btn-close-history" aria-label="Geçmişi kapat">✕</button>
+      </div>
+      <div class="history-list" id="history-list">
+        <!-- Dinamik olarak doldurulacak -->
+      </div>
+      <button class="history-new-btn" id="btn-new-chat">＋ Yeni Sohbet</button>
+    </aside>
+
+    <!-- Chat Area -->
+    <main class="chat-area" id="chat-area">
+      <div class="chat-messages" id="chat-messages">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcome-screen">
+          <div class="welcome-icon">🇩🇪</div>
+          <h1 class="welcome-title">Hallo! Almanca Pratiğe Başla</h1>
+          <p class="welcome-subtitle">
+            Mikrofona bas ve Almanca konuşmaya başla. Hatalarını düzeltip sana Türkçe geri bildirim vereceğim, sonra sohbetimize Almanca devam edeceğiz.
+          </p>
+          <div class="welcome-hints">
+            <button class="hint-chip" data-hint="Hallo, ich heiße... Wie heißt du?">👋 Kendini tanıt</button>
+            <button class="hint-chip" data-hint="Was kann ich hier in der Stadt machen?">🏙️ Şehir gezisi</button>
+            <button class="hint-chip" data-hint="Ich möchte etwas bestellen, bitte.">🍽️ Restoran</button>
+            <button class="hint-chip" data-hint="Können Sie mir den Weg erklären?">🗺️ Yol tarifi</button>
+            <button class="hint-chip" data-hint="Ich habe ein Vorstellungsgespräch.">💼 İş görüşmesi</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="input-area" id="input-area">
+      <div class="input-area-inner">
+        <!-- Waveform -->
+        <div class="waveform-container" id="waveform-container">
+          <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
+        </div>
+
+        <!-- Mic Button -->
+        <div class="mic-button-wrapper">
+          <button class="mic-button" id="btn-mic" aria-label="Mikrofon ile kayıt başlat">
+            🎤
+          </button>
+          <div class="mic-pulse-ring"></div>
+          <div class="mic-pulse-ring"></div>
+        </div>
+        <button id="btn-disconnect" class="btn btn--danger" style="display: none; position: absolute; margin-left: 140px; border-radius: 20px; padding: 5px 15px; font-size: 12px; font-weight: bold; z-index: 10;">Kapat</button>
+        <div class="mic-status" id="mic-status">Konuşmak için mikrofona bas</div>
+
+        <!-- Text Input -->
+        <div class="text-input-row">
+          <input
+            type="text"
+            class="text-input"
+            id="text-input"
+            placeholder="Veya buraya yazabilirsin..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="send-btn" id="btn-send" disabled aria-label="Mesaj gönder">➤</button>
+        </div>
+
+        <!-- Quick Controls -->
+        <div class="quick-controls">
+          <label class="quick-control">
+            📊 Seviye:
+            <select id="select-level">
+              <option value="A1">A1</option>
+              <option value="A2">A2</option>
+              <option value="B1" selected>B1</option>
+              <option value="B2">B2</option>
+              <option value="C1">C1</option>
+              <option value="C2">C2</option>
+            </select>
+          </label>
+          <label class="quick-control">
+            📝 Konu:
+            <select id="select-topic">
+              <option value="free">Serbest</option>
+              <option value="restaurant">Restoran</option>
+              <option value="travel">Seyahat</option>
+              <option value="interview">İş Görüşmesi</option>
+              <option value="daily">Günlük Yaşam</option>
+              <option value="shopping">Alışveriş</option>
+              <option value="health">Sağlık</option>
+              <option value="education">Eğitim</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">⚙️ Ayarlar</h2>
+          <button class="modal-close" id="btn-close-settings" aria-label="Ayarları kapat">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-group" id="group-gemini-agent">
+            <h3 class="settings-group-title">✨ Gemini Agent Ayarları</h3>
+            <div class="settings-field">
+              <label class="settings-label" for="select-gemini-voice">Gemini Sesi</label>
+              <div style="display: flex; gap: 8px;">
+                <select class="settings-select" id="select-gemini-voice" style="flex: 1;">
+                  <option value="Kore">Kadın (Kore — Sakin, Dengeli)</option>
+                  <option value="Aoede">Kadın (Aoede — Net, Canlı)</option>
+                  <option value="Puck">Erkek (Puck — Neşeli, Dinamik)</option>
+                  <option value="Charon">Erkek (Charon — Tok, Ağırbaşlı)</option>
+                  <option value="Fenrir">Erkek (Fenrir — İnce, Alternatif)</option>
+                </select>
+                <button id="btn-demo-voice" class="btn btn--secondary" title="Sesi Dinle" style="padding: 0 12px; font-size: 1.2rem;">▶️</button>
+              </div>
+            </div>
+            <div class="settings-field">
+              <label class="settings-label" for="input-auto-disconnect">Otomatik Kapanma Süresi (Saniye)</label>
+              <input type="number" class="settings-input" id="input-auto-disconnect" placeholder="60" min="10" max="600">
+              <div class="settings-hint">Sessiz kalındığında görüşmenin kapanacağı süre (varsayılan: 60)</div>
+            </div>
+            <div class="settings-hint" style="padding: 8px 0; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+              ℹ️ Sadece Gemini API Key gereklidir. STT, LLM ve TTS tamamen Gemini üzerinden çalışır.
+            </div>
+          </div>
+
+          <!-- API Keys -->
+          <div class="settings-group">
+            <h3 class="settings-group-title">🔑 API Anahtarı</h3>
+
+            <div class="settings-field">
+              <label class="settings-label" for="input-gemini-key">Google Gemini API Key</label>
+              <input type="password" class="settings-input" id="input-gemini-key" placeholder="AIza...">
+              <div class="settings-hint">Uygulamanın çalışması için zorunludur</div>
+            </div>
+          </div>
+
+
+
+          <!-- Cloud Database Sync -->
+          <div class="settings-group">
+            <h3 class="settings-group-title">☁️ Supabase Veritabanı</h3>
+            <button class="btn btn--secondary" id="btn-sync-supabase" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              🔄 Tarayıcı Verilerini Şimdi Supabase'e Aktar
+            </button>
+            <div class="settings-hint" style="margin-top: 6px;">
+              Tarayıcıdaki tüm konuşma geçmişini, ses kayıtlarını ve sözlük kelimelerini Supabase veritabanına aktarır.
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="settings-group">
+            <h3 class="settings-group-title">⚠️ Tehlikeli Bölge</h3>
+            <button class="btn btn--danger" id="btn-clear-history">🗑️ Tüm Sohbet Geçmişini Sil</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn--secondary" id="btn-cancel-settings">İptal</button>
+          <button class="btn btn--primary" id="btn-save-settings">💾 Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
+<script>window.addEventListener('error', function(e) { alert('Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno); }); window.addEventListener('unhandledrejection', function(e) { alert('Unhandled Rejection: ' + e.reason); });</script>

@@ -1,0 +1,23 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Her gün saat 12:00'de (UTC) otomatik çalışır
+    - cron: '0 12 * * *'
+  workflow_dispatch: # GitHub üzerinden manuel olarak da tetiklenebilir
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12cWF6d2Z5YXhuaGp1bmVtYW5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMTkyNjYsImV4cCI6MjEwODc5NTI2Nn0.v8QNMEW6ybfmUM6IWkS3NNJNSH76mF1izpx9j4F5-Mw" \
+            "https://mvqazwfyaxnhjunemanr.supabase.co/rest/v1/kelimeler?select=id&limit=1")
+          echo "Supabase yanıt kodu: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Supabase aktif ve başarıyla yoklandı."
+          else
+            echo "Beklenmeyen yanıt: $HTTP_STATUS"
+          fi

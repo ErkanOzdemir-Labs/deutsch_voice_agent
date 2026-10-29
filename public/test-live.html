@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gemini Live API Test</title>
+</head>
+<body>
+    <h1>Gemini Live API Minimal Test</h1>
+    <p>Check the browser console (F12) for logs.</p>
+    <button id="btnConnect">1. Connect</button>
+    <button id="btnSend" disabled>2. Send Text</button>
+    
+    <pre id="logArea" style="background: #f0f0f0; padding: 10px; min-height: 200px;"></pre>
+
+    <script>
+        let ws;
+        const logArea = document.getElementById('logArea');
+        const btnConnect = document.getElementById('btnConnect');
+        const btnSend = document.getElementById('btnSend');
+
+        function log(msg) {
+            console.log(msg);
+            logArea.textContent += msg + '\n';
+        }
+
+        btnConnect.addEventListener('click', () => {
+            // Grab API key from localStorage
+            const settingsStr = localStorage.getItem('dv_settings');
+            if (!settingsStr) {
+                log('ERROR: No settings found in localStorage (dv_settings is missing)');
+                return;
+            }
+            const apiKey = JSON.parse(settingsStr).geminiKey;
+            
+            const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`;
+            log('Connecting to ' + url.replace(apiKey, '***'));
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                log('WebSocket OPEN. Sending setup...');
+                
+                const setupMessage = {
+                    setup: {
+                        model: "models/gemini-3.1-flash-live-preview",
+                        generationConfig: {
+                            responseModalities: ["AUDIO"]
+                        }
+                    }
+                };
+                ws.send(JSON.stringify(setupMessage));
+                log('Setup sent.');
+            };
+            
+            ws.onmessage = (event) => {
+                const processData = (textData) => {
+                    log('RECEIVE: ' + textData);
+                    try {
+                        const data = JSON.parse(textData);
+                        if (data.setupComplete) {
+                            btnSend.disabled = false;
+                            log('SETUP COMPLETE RECEIVED! Ready to send text.');
+                        }
+                    } catch (e) {}
+                };
+
+                if (event.data instanceof Blob) {
+                    event.data.text().then(processData);
+                } else {
+                    processData(event.data);
+                }
+            };
+            
+            ws.onerror = (err) => {
+                log('WS ERROR');
+            };
+            
+            ws.onclose = (e) => {
+                log(`WS CLOSED. Code: ${e.code}, Reason: ${e.reason}`);
+            };
+        });
+
+        btnSend.addEventListener('click', () => {
+            log('Sending text "Hello"...');
+            const message = {
+                clientContent: {
+                    turns: [{
+                        role: "user",
+                        parts: [{ text: "Hello, can you hear me?" }]
+                    }],
+                    turnComplete: true
+                }
+            };
+            ws.send(JSON.stringify(message));
+        });
+    </script>
+</body>
+</html>

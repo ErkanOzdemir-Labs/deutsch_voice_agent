@@ -1,0 +1,21 @@
+{
+  "name": "deutsch-voice-agent",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Almanca Konuşma Asistanı — AI destekli sesli dil öğrenme uygulaması",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0",
+    "vite-plugin-pwa": "^0.21.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.23.1"
+  }
+}

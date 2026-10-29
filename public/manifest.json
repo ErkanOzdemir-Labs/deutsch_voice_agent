@@ -1,0 +1,20 @@
+{
+  "name": "DeutschVoice Agent",
+  "short_name": "DeutschVoice",
+  "description": "Almanca Konuşma Asistanı — AI destekli sesli dil öğrenme",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "lang": "tr"
+}
